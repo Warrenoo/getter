@@ -1,2 +1,2 @@
 # getter
-## Sample WebSockst Client
+## Sample WebSocket Client

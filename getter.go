@@ -1,7 +1,7 @@
 package getter
 
 import (
-	"golang.org/x/net/websocket"
+	"github.com/golang/net/websocket"
 	"log"
 )
 

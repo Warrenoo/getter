@@ -5,18 +5,32 @@ import (
 	"log"
 )
 
+type Data []byte
+
 type Client struct {
 	origin string
 	url    string
 	ext    string
 	conn   *websocket.Conn
+	ch     chan Data
+	done   chan bool
 }
 
-func New(origin string, url string, ext string) *Client {
-	client := &Client{origin, url, ext, nil}
+const channelBufSize = 1024
 
-	//runtime.SetFinalizer(client, client.conn.Close)
-	return client
+func New(origin string, url string, ext string) *Client {
+	ch := make(chan Data, channelBufSize)
+	done := make(chan bool)
+
+	return &Client{origin, url, ext, nil, ch, done}
+}
+
+func (this *Client) Ch() chan Data {
+	return this.ch
+}
+
+func (this *Client) Done() chan bool {
+	return this.done
 }
 
 func (this *Client) send(message []byte) {
@@ -24,12 +38,28 @@ func (this *Client) send(message []byte) {
 	sign_log(err)
 }
 
-func (this *Client) receive() []byte {
-	var data []byte = make([]byte, 2048)
+func (this *Client) receive() {
+	var data Data = make(Data, 2048)
 
-	m, err := this.conn.Read(data)
-	sign_log(err)
-	return data[:m]
+	for {
+		select {
+		// receive done request
+		case <-this.done:
+			this.done <- true
+			return
+		// read data from websocket connection
+		default:
+
+			m, err := this.conn.Read(data)
+			sign_log(err)
+
+			if err != nil {
+				this.done <- true
+			} else {
+				this.ch <- data[:m]
+			}
+		}
+	}
 }
 
 func (this *Client) OnConnect(f func()) {
@@ -39,14 +69,11 @@ func (this *Client) OnConnect(f func()) {
 	f()
 }
 
-func (this *Client) OnListen(message []byte, f func([]byte)) {
+func (this *Client) OnListen(message []byte, f func()) {
 	this.send(message)
 
-	for true {
-		data := this.receive()
-		f(data)
-	}
-
+	go this.receive()
+	f()
 }
 
 func (this *Client) OnClose(f func()) {

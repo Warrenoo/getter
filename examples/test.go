@@ -16,10 +16,16 @@ func main() {
 		fmt.Printf("Init: %s\n", url)
 	})
 
-	message := []byte("{'test':1}")
+	message := getter.Data("{'test':1}")
 	fmt.Printf("Listen: %s\n", message)
-	client.OnListen(message, func(data []byte) {
-		fmt.Printf("Receive: %s\n", data)
+	client.OnListen(message, func() {
+		for {
+			select {
+			// 处理返回结果
+			case data := <-client.Ch():
+				fmt.Printf("Receive: %s\n", data)
+			}
+		}
 	})
 
 	client.OnClose(func() {

@@ -1,6 +1,7 @@
 package getter
 
 import (
+	"fmt"
 	"golang.org/x/net/websocket"
 	"log"
 )
@@ -39,7 +40,6 @@ func (this *Client) send(message []byte) {
 }
 
 func (this *Client) receive() {
-	var data Data = make(Data, 2048)
 
 	for {
 		select {
@@ -50,7 +50,9 @@ func (this *Client) receive() {
 		// read data from websocket connection
 		default:
 
+			var data Data = make(Data, 4096)
 			m, err := this.conn.Read(data)
+			fmt.Printf("data = %s, count = %d\n", data, m)
 			sign_log(err)
 
 			if err != nil {

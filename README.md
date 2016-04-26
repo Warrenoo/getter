@@ -1,6 +1,7 @@
 # getter
 - Sample WebSocket Client
-## INSTALL
+
+### INSTALL
 ``````
   go get github.com/warrenoo/getter
   go get github.com/golang/net
@@ -8,8 +9,7 @@
   go install golang.org/x/net/websocket
 ``````
 
-## USE
-
+### USE
 ``````ruby
 	var origin string = "http://test.com"
 	var url string = "ws://127.0.0.1:6000/websocket"

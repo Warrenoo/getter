@@ -7,16 +7,16 @@ import (
 
 func main() {
 
-	var origin string = "http://test.com"
-	var url string = "ws://127.0.0.1:6000/websocket"
+	var url string = "127.0.0.1:6000"
+	var path string = "/websocket"
 
-	client := getter.New(origin, url, "")
+	client := getter.New(url, path)
 
-	client.OnConnect(func() {
+	client.OnOpen(func() {
 		fmt.Printf("Init: %s\n", url)
 	})
 
-	message := getter.Data("{'test':1}")
+	message := []byte("{'test':1}")
 	fmt.Printf("Listen: %s\n", message)
 	client.OnListen(message, func() {
 		for {

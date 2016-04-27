@@ -1,32 +1,32 @@
 package getter
 
 import (
+	"flag"
 	"fmt"
-	"golang.org/x/net/websocket"
+	"github.com/gorilla/websocket"
 	"log"
+	"net/url"
+	"os"
 )
 
-type Data []byte
-
 type Client struct {
-	origin string
-	url    string
-	ext    string
-	conn   *websocket.Conn
-	ch     chan Data
-	done   chan bool
+	url  string
+	path string
+	conn *websocket.Conn
+	ch   chan string
+	done chan bool
 }
 
 const channelBufSize = 1024
 
-func New(origin string, url string, ext string) *Client {
-	ch := make(chan Data, channelBufSize)
+func New(url string, path string) *Client {
+	ch := make(chan string, channelBufSize)
 	done := make(chan bool)
 
-	return &Client{origin, url, ext, nil, ch, done}
+	return &Client{url, path, nil, ch, done}
 }
 
-func (this *Client) Ch() chan Data {
+func (this *Client) Ch() chan string {
 	return this.ch
 }
 
@@ -35,37 +35,35 @@ func (this *Client) Done() chan bool {
 }
 
 func (this *Client) send(message []byte) {
-	_, err := this.conn.Write(message)
+	err := this.conn.WriteMessage(websocket.TextMessage, message)
 	sign_log(err)
 }
 
 func (this *Client) receive() {
-
 	for {
 		select {
 		// receive done request
 		case <-this.done:
-			this.done <- true
 			return
 		// read data from websocket connection
 		default:
-
-			var data Data = make(Data, 4096)
-			m, err := this.conn.Read(data)
-			fmt.Printf("data = %s, count = %d\n", data, m)
+			_, message, err := this.conn.ReadMessage()
 			sign_log(err)
+			fmt.Printf("pid1: %d\n", os.Getpid())
 
 			if err != nil {
 				this.done <- true
 			} else {
-				this.ch <- data[:m]
+				this.ch <- string(message)
 			}
 		}
 	}
 }
 
-func (this *Client) OnConnect(f func()) {
-	ws, err := websocket.Dial(this.url, this.ext, this.origin)
+func (this *Client) OnOpen(f func()) {
+	var addr = flag.String("addr", this.url, "http service address")
+	u := url.URL{Scheme: "ws", Host: *addr, Path: this.path}
+	ws, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	sign_log(err)
 	this.conn = ws
 	f()

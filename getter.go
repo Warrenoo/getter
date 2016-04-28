@@ -7,26 +7,40 @@ import (
 	"log"
 	"net/url"
 	"os"
+	"time"
 )
+
+type MateData struct {
+	data string
+	st   time.Time
+}
+
+func (this *MateData) Data() string {
+	return this.data
+}
+
+func (this *MateData) St() time.Time {
+	return this.st
+}
 
 type Client struct {
 	url  string
 	path string
 	conn *websocket.Conn
-	ch   chan string
+	ch   chan *MateData
 	done chan bool
 }
 
 const channelBufSize = 1024
 
 func New(url string, path string) *Client {
-	ch := make(chan string, channelBufSize)
+	ch := make(chan *MateData, channelBufSize)
 	done := make(chan bool)
 
 	return &Client{url, path, nil, ch, done}
 }
 
-func (this *Client) Ch() chan string {
+func (this *Client) Ch() chan *MateData {
 	return this.ch
 }
 
@@ -54,7 +68,9 @@ func (this *Client) receive() {
 			if err != nil {
 				this.done <- true
 			} else {
-				this.ch <- string(message)
+				md := MateData{string(message), time.Now()}
+
+				this.ch <- &md
 			}
 		}
 	}

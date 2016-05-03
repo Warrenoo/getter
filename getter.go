@@ -2,11 +2,9 @@ package getter
 
 import (
 	"flag"
-	"fmt"
 	"github.com/gorilla/websocket"
 	"log"
 	"net/url"
-	"os"
 	"time"
 )
 
@@ -63,7 +61,6 @@ func (this *Client) receive() {
 		default:
 			_, message, err := this.conn.ReadMessage()
 			sign_log(err)
-			fmt.Printf("pid1: %d\n", os.Getpid())
 
 			if err != nil {
 				this.done <- true

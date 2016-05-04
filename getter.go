@@ -82,8 +82,10 @@ func (this *Client) OnOpen(f func()) {
 	f()
 }
 
-func (this *Client) OnListen(message []byte, f func()) {
-	this.send(message)
+func (this *Client) OnListen(messages *[]string, f func()) {
+	for _, v := range *messages {
+		this.send([]byte(v))
+	}
 
 	go this.receive()
 	f()

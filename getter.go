@@ -38,6 +38,10 @@ func New(url string, path string) *Client {
 	return &Client{url, path, nil, ch, done}
 }
 
+func (this *Client) Conn() *websocket.Conn {
+	return this.conn
+}
+
 func (this *Client) Ch() chan *MateData {
 	return this.ch
 }
@@ -92,8 +96,8 @@ func (this *Client) OnListen(messages *[]string, f func()) {
 }
 
 func (this *Client) OnClose(f func()) {
-	this.conn.Close()
 	f()
+	this.conn.Close()
 }
 
 func sign_log(err error) {

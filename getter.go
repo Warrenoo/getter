@@ -33,7 +33,7 @@ const channelBufSize = 1024
 
 func New(url string, path string) *Client {
 	ch := make(chan *MateData, channelBufSize)
-	done := make(chan bool)
+	done := make(chan bool, 1)
 
 	return &Client{url, path, nil, ch, done}
 }
@@ -77,26 +77,26 @@ func (this *Client) receive() {
 	}
 }
 
-func (this *Client) OnOpen(f func()) {
+func (this *Client) OnOpen(f func(*Client)) {
 	var addr = flag.String("addr", this.url, "http service address")
 	u := url.URL{Scheme: "ws", Host: *addr, Path: this.path}
 	ws, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	sign_log(err)
 	this.conn = ws
-	f()
+	f(this)
 }
 
-func (this *Client) OnListen(messages *[]string, f func()) {
+func (this *Client) OnListen(messages *[]string, f func(*Client)) {
 	for _, v := range *messages {
 		this.send([]byte(v))
 	}
 
 	go this.receive()
-	f()
+	f(this)
 }
 
-func (this *Client) OnClose(f func()) {
-	f()
+func (this *Client) OnClose(f func(*Client)) {
+	f(this)
 	this.conn.Close()
 }
 
